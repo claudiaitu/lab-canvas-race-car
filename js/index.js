@@ -11,6 +11,13 @@ car.src = "../images/car.png"
 const startingX = canvas.width/2 - 25
 const startingY = canvas.height - 125
 
+let intervalId;
+let animationId;
+
+let gameOn = false;
+
+let score = 0;
+
 class Obstacle {
   constructor() {
     this.x = Math.random() * 700,
@@ -35,9 +42,11 @@ const player = {
 
   x: startingX,
   y: startingY,
+  width: 50,
+  height: 100,
 
   draw: function() {
-    ctx.drawImage(car, this.x, this.y, 50, 100)
+    ctx.drawImage(car, this.x, this.y, this.width, this.height)
   },
 
   moveLeft: function() {
@@ -57,36 +66,50 @@ const player = {
   }
 }
 
-const obstaclesArray = []
+function checkCollision (obstacle) {
+
+  if (player.y < obstacle.y + obstacle.height 
+    && obstacle.y < player.y + player.height 
+    && obstacle.x < player.x + player.width 
+    & obstacle.x + obstacle.width > player.x) {
+      gameOver()
+
+    // console.log("Colliding")
+
+  }
+}
+
+let obstaclesArray = []
 
 function createObstacle() {
-  let intervalId = setInterval(() =>{
+  intervalId = setInterval(() =>{
     obstaclesArray.push(new Obstacle())
 }, 2000)
 
 }
 
-function updateCanvas() {
-  ctx.clearRect(0,0,500,700)
-
-  ctx.drawImage(road, 0, 0, 500, 700)
-  player.draw()
-
-  for (let i = 0; i < obstaclesArray.length; i++) {
-    obstaclesArray[i].newPosition()
-    obstaclesArray[i].draw()
-  }
-
-}
-
 function animationLoop() {
-  let animationId = setInterval(() =>{
+  animationId = setInterval(() =>{
     updateCanvas()
   }, 16)
 }
 
+function showScore() {
+  ctx.fillStyle = 'black'
+  ctx.fillRect(340, 10, 150, 50)
+
+  ctx.fillStyle = "white"
+  ctx.font = '18px serif'
+  ctx.fillText(`Score: ${score}`, 380, 40)
+}
+
 
  function startGame() {
+
+  gameOn = true 
+    obstaclesArray = []
+    player.x = startingX
+    player.y = startingY
     CSSTransition.draw
   
     ctx.drawImage(road, 0, 0, 500, 700)
@@ -96,28 +119,83 @@ function animationLoop() {
 
   }
 
+  function updateCanvas() {
+    ctx.clearRect(0,0,500,700)
+  
+    ctx.drawImage(road, 0, 0, 500, 700)
+
+    showScore()
+
+    player.draw()
+  
+    for (let i = 0; i < obstaclesArray.length; i++) {
+      if (obstaclesArray[i].y > canvas.height) {
+        obstaclesArray.splice(i, 1)
+        score++
+        console.log("This is the score:", score, obstaclesArray)
+      }
+      checkCollision(obstaclesArray[i])
+      obstaclesArray[i].newPosition()
+      obstaclesArray[i].draw()
+    }
+  
+  showScore()
+  if (score === 15) {
+      gameOver()
+  }
+  }
+
+  function gameOver () {
+    gameOn = false
+    console.log("Game Over")
+
+    
+    clearInterval(animationId)
+    clearInterval(intervalId)
+
+    ctx.clearRect(0,0,500,700)
+    ctx.fillStyle = 'black'
+    ctx.fillRect(0,0,500,700)
+    
+
+    
+    if (score > 14) {
+      ctx.fillStyle= "white"
+      ctx.font = '40px serif'
+      ctx.fillText("You've won!", 150, 200)
+    } else {
+      ctx.fillStyle = "white"
+      ctx.font= '40px serif'
+      ctx.fillText("You Lose!", 150, 200)
+    }
+    obstaclesArray = []
+    score = 0
+  }
+
 window.onload = () => {
   document.getElementById('start-button').onclick = () => {
+    if (gameOn === false) {
     startGame();
+    }
   };
 
   document.addEventListener('keydown', e => {
     switch (e.keyCode) {
       case 38:
         player.moveUp();
-        console.log('up', player);
+        // console.log('up', player);
         break;
       case 40:
         player.moveDown();
-        console.log('down', player);
+        // console.log('down', player);
         break;
       case 37:
         player.moveLeft();
-        console.log('left', player);
+        // console.log('left', player);
         break;
       case 39:
         player.moveRight();
-        console.log('right', player);
+        // console.log('right', player);
         break;
     }
     // updateCanvas();
